@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ChatGptIndexController;
+use App\Http\Controllers\ChatGptStoreController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -24,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/chat/{id?}', ChatGptIndexController::class)->name('chat.show');
+    Route::post('/chat/{id?}', ChatGptStoreController::class)->name('chat.store');
 });
 
 require __DIR__.'/auth.php';
