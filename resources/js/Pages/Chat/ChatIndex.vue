@@ -1,7 +1,14 @@
 <template>
     <ChatLayaout>
         <template #aside>
+            <ul class="p-2">
+                <template v-for="message in messages" :key="message.id">
+                    <li class="px-4 py-2 my-2 flex justify-between font-semibold text-slate-400 bg-slate-900 hover:bg-slate-700 rounded-lg duration-200">
+                        <link :href="`/chat/${message.id}`">{{message.context[0].content}}</link>
 
+                    </li>
+                </template>
+            </ul>
         </template>
             <div class="w-full flex text-white">
 
