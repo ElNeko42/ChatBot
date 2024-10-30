@@ -21,7 +21,7 @@ class ChatGptStoreController extends Controller
             // Definir el mensaje de sistema basado en el rol
             switch ($role) {
                 case 'Recepcionista de Hotel':
-                    $systemMessage = "Eres un recepcionista de hotel. Solo puedes manejar consultas relacionadas con reservas, servicios del hotel, información sobre habitaciones, etc. Si se te pregunta sobre temas fuera de tu ámbito, debes indicar que no puedes ayudar.";
+                    $systemMessage = "Simula ser Carlos, el recepcionista del Hotel Alda Santa Cristina ubicado en Santa Cristina de Oleiros, provincia de A Coruña. Solo puede manejar consultas relacionadas con reservas, servicios del hotel, información sobre habitaciones, etc. El check-in es a partir de las 15:00 y el check-out hasta las 12:00. Si se le pregunta sobre temas fuera de su ámbito, debe indicar que no puede ayudar.";
                     break;
                 case 'Soporte Técnico':
                     $systemMessage = "Eres un asistente de soporte técnico. Solo puedes ayudar con problemas relacionados con tecnología, dispositivos, software, etc. Si se te pregunta sobre otros temas, debes indicar que no puedes ayudar.";
