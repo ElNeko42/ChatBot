@@ -6,23 +6,23 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreChatRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
+    public function authorize()
     {
-        return true;
+        return true; // Ajusta según tus necesidades de autorización
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    public function rules()
     {
-        return [
-            'promt' => 'required|string',
-        ];
+        $rules = [];
+
+        if ($this->route('id')) {
+            // Si hay un ID, estás actualizando un chat: requiere 'promt'
+            $rules['promt'] = 'required|string';
+        } else {
+            // Si no hay ID, estás creando un nuevo chat: requiere 'role'
+            $rules['role'] = 'required|string|in:Recepcionista de Hotel,Asistente General,Soporte Técnico';
+        }
+
+        return $rules;
     }
 }

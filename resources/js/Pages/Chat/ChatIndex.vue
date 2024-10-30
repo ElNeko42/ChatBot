@@ -1,13 +1,16 @@
+<!-- resources/js/Pages/chatindex.vue -->
+
 <template>
     <Head :title="title" />
     <ChatLayaout>
         <template #aside>
             <ul class="p-2">
+                <!-- Botón "New Chat" que abre el modal -->
                 <li
-                    v-if="chat"
-                    class="px-4 py-2 my-2 flex justify-between font-semibold text-green-400 bg-slate-900 hover:bg-slate-700 rounded-lg duration-200"
+                    class="px-4 py-2 my-2 flex justify-between font-semibold text-green-400 bg-slate-900 hover:bg-slate-700 rounded-lg duration-200 cursor-pointer"
+                    @click="openModelSelection"
                 >
-                    <Link href="/chat" class="w-full">New Chat</Link>
+                    <span class="w-full">New Chat</span>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
@@ -23,6 +26,7 @@
                         />
                     </svg>
                 </li>
+                <!-- Lista de chats existentes -->
                 <template v-for="message in messages" :key="message.id">
                     <li
                         :class="[
@@ -36,9 +40,10 @@
                             message.context[0].content
                         }}</Link>
                         <div v-if="message.id === chat?.id">
+                            <!-- Botones de eliminar chat -->
                             <button
-                                v-if="!showDeleteButton"
-                                @click="showDeleteButton = !showDeleteButton"
+                                v-if="!message.showDeleteButton"
+                                @click="toggleDeleteButton(message.id)"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -56,11 +61,11 @@
                                 </svg>
                             </button>
                             <span
-                                v-if="showDeleteButton"
+                                v-if="message.showDeleteButton"
                                 class="flex justify-between"
                             >
                                 <Link
-                                    :href="route('chat.destroy', chat?.id)"
+                                    :href="route('chat.destroy', message.id)"
                                     method="DELETE"
                                     as="button"
                                     class="text-red-300 hover:text-red-500"
@@ -82,7 +87,7 @@
                                 </Link>
 
                                 <button
-                                    @click="showDeleteButton = false"
+                                    @click="toggleDeleteButton(message.id)"
                                     class="text-slate-300 hover:text-slate-500"
                                 >
                                     <svg
@@ -106,6 +111,8 @@
                 </template>
             </ul>
         </template>
+
+        <!-- Contenido principal del chat -->
         <div class="w-full flex text-white">
             <template v-if="chat">
                 <div class="w-full flex h-screen bg-slate-900">
@@ -121,6 +128,8 @@
                 </div>
             </template>
         </div>
+
+        <!-- Formulario para enviar mensajes -->
         <template #form>
             <section class="px-6 top-0">
                 <div class="w-full">
@@ -161,36 +170,119 @@
                 </div>
             </section>
         </template>
+
+        <!-- Modal de selección de modelos -->
+        <Modal :show="showModelSelection" @close="showModelSelection = false">
+            <div class="p-6 bg-slate-800 rounded-lg">
+                <h2 class="text-2xl font-semibold text-center text-white mb-4">
+                    Selecciona un modelo
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Card
+                        v-for="model in models"
+                        :key="model.name"
+                        :model="model"
+                        @select="selectModel"
+                    />
+                </div>
+            </div>
+        </Modal>
     </ChatLayaout>
 </template>
+
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { Head } from "@inertiajs/vue3";
 import ChatLayaout from '@/Layouts/ChatLayaout.vue';
 import { useForm, Link } from "@inertiajs/vue3";
 import ChatContent from "@/Components/ChatContent.vue";
 import Skeleton from "@/Components/Skeleton.vue";
+import Modal from "@/Components/Modal.vue";
+import Card from "@/Components/Card.vue";
 
-const promtInput = ref(null);
-const chatContainer = ref(null);
-const showDeleteButton = ref(false);
-
+// Definir las props
 const props = defineProps({
     messages: Array,
     chat: null | Object,
 });
 
-const form = useForm({
-    promt: "",
+// Manejar y sincronizar los mensajes con el estado local
+const messages = ref([...props.messages.map(msg => ({ ...msg, showDeleteButton: false }))]);
+
+watch(() => props.messages, (newMessages) => {
+    messages.value = [...newMessages.map(msg => ({ ...msg, showDeleteButton: false }))];
 });
 
-const submit = () => {
-    const url = props.chat ? `/chat/${props.chat?.id}` : "/chat";
-    form.post(url, {
-        onFinish: () => clear(),
+// Referencias a elementos del DOM
+const promtInput = ref(null);
+const chatContainer = ref(null);
+
+// Definir el estado para mostrar/ocultar el modal de selección de modelos
+const showModelSelection = ref(false);
+
+// Lista de modelos disponibles
+const models = [
+    {
+        name: "Recepcionista de Hotel",
+        description: "Simula ser un recepcionista de hotel. Solo puede manejar consultas relacionadas con reservas, servicios del hotel, información sobre habitaciones, etc. Si se le pregunta sobre temas fuera de su ámbito, debe indicar que no puede ayudar."
+    },
+    {
+        name: "Asistente General",
+        description: "Simula ser un asistente general que puede responder a cualquier tipo de pregunta."
+    },
+    {
+        name: "Soporte Técnico",
+        description: "Simula ser un asistente de soporte técnico. Solo puede ayudar con problemas relacionados con tecnología, dispositivos, software, etc. Si se le pregunta sobre otros temas, debe indicar que no puede ayudar."
+    }
+];
+
+// Formulario para manejar mensajes y rol seleccionado
+const form = useForm({
+    promt: "",
+    role: "", // Campo para el rol seleccionado
+});
+
+// Función para abrir el modal de selección de modelos
+const openModelSelection = () => {
+    showModelSelection.value = true;
+};
+
+// Función para manejar la selección de un modelo
+const selectModel = (model) => {
+    showModelSelection.value = false;
+    form.role = model.name;
+
+    // Iniciar un nuevo chat con el modelo seleccionado
+    form.post('/chat', {
+        data: {
+            role: model.name,
+            // promt: model.description, // Asegúrate de que esta línea esté comentada o eliminada
+        },
+        onSuccess: () => {
+            form.reset(['promt', 'role']);
+        },
+        onError: (errors) => {
+            // Manejar errores si es necesario
+            console.error(errors);
+            alert('Error al crear el chat. Por favor, inténtalo de nuevo.');
+        },
     });
 };
 
+// Función para enviar mensajes al chat existente
+const submit = () => {
+    if (props.chat) {
+        const url = `/chat/${props.chat?.id}`;
+        form.post(url, {
+            onFinish: () => clear(),
+        });
+    } else {
+        // Si no hay chat seleccionado, abrir el modal de selección de modelo
+        openModelSelection();
+    }
+};
+
+// Función para desplazar el contenedor del chat hacia abajo
 const scrollToBottom = () => {
     if (props.chat) {
         const el = chatContainer.value;
@@ -198,17 +290,30 @@ const scrollToBottom = () => {
     }
 };
 
+// Función para limpiar el formulario después de enviar
 const clear = () => {
     form.promt = "";
     promtInput.value.focus();
     scrollToBottom();
 };
+
+// Limpiar el formulario al montar el componente
 onMounted(() => {
     clear();
 });
 
-const title = computed(() => props.chat?.context[0].content ?? "New Chat");
+// Computed property para el título del chat
+const title = computed(() => props.chat?.context[0]?.content ?? "New Chat");
+
+// Función para alternar la visibilidad del botón de borrar chat por chat
+const toggleDeleteButton = (chatId) => {
+    const chat = messages.value.find(msg => msg.id === chatId);
+    if (chat) {
+        chat.showDeleteButton = !chat.showDeleteButton;
+    }
+};
 </script>
+
 <style>
 .dot-typing {
     position: relative;
