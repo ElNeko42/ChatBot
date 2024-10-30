@@ -8,7 +8,7 @@
                     class="px-4 py-2 my-2 flex justify-between font-semibold text-green-400 bg-slate-900 hover:bg-slate-700 rounded-lg duration-200 cursor-pointer"
                     @click="openModelSelection"
                 >
-                    <span class="w-full">New Chat</span>
+                    <span class="w-full">Crear Chat</span>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
@@ -136,7 +136,7 @@
                         <input
                             type="text"
                             class="w-full bg-slate-700 text-white rounded-lg"
-                            placeholder="Ask Laravel AI"
+                            placeholder="Escribe un mensaje..."
                             v-model="form.promt"
                             @keyup.enter="submit"
                             :disabled="form.processing"
